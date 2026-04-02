@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Settings } from "lucide-react";
-import { Mail, MapPin } from "lucide-react";
+import { Settings, Mail, MapPin } from "lucide-react";
 import { Hero } from "@/components/hero";
 import { Projects } from "@/components/projects";
 import { Skills } from "@/components/skills";
@@ -150,14 +149,10 @@ export default function Home() {
   // Scroll to section when tab is clicked
   const handleTabClick = (id: TabId) => {
     const section = document.getElementById(`section-${id}`);
-    if (!section || !scrollContainerRef.current) return;
+    if (!section) return;
     isScrollingProgrammatically.current = true;
-    scrollContainerRef.current.scrollTo({
-      top: section.offsetTop,
-      behavior: "smooth",
-    });
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
     setActiveTab(id);
-    // Allow scroll detection to re-enable after animation
     setTimeout(() => { isScrollingProgrammatically.current = false; }, 800);
   };
 
@@ -211,7 +206,7 @@ export default function Home() {
 
           {/* Line numbers — sticky so they follow scroll */}
           <div className="hidden md:block sticky top-0 float-left z-10">
-            <LineNumbers totalLines={120} />
+            <LineNumbers totalLines={120} scrollContainerRef={scrollContainerRef} />
           </div>
 
           {/* ── Section: ABOUTME.CPP ── */}

@@ -4,25 +4,38 @@ import { useEffect, useRef, useState } from "react";
 
 interface LineNumbersProps {
   totalLines?: number;
+  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function LineNumbers({ totalLines = 60 }: LineNumbersProps) {
+export function LineNumbers({ totalLines = 60, scrollContainerRef }: LineNumbersProps) {
   const [activeLine, setActiveLine] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const target = scrollContainerRef?.current ?? window;
+
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const maxScroll = document.body.scrollHeight - window.innerHeight;
+      let scrollY: number;
+      let maxScroll: number;
+
+      if (scrollContainerRef?.current) {
+        const el = scrollContainerRef.current;
+        scrollY = el.scrollTop;
+        maxScroll = el.scrollHeight - el.clientHeight;
+      } else {
+        scrollY = window.scrollY;
+        maxScroll = document.body.scrollHeight - window.innerHeight;
+      }
+
       const progress = maxScroll > 0 ? scrollY / maxScroll : 0;
       const line = Math.floor(1 + progress * (totalLines - 1));
       setActiveLine(line);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    target.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [totalLines]);
+    return () => target.removeEventListener("scroll", handleScroll);
+  }, [totalLines, scrollContainerRef]);
 
   // Keep active line visible in the numbers column
   useEffect(() => {
