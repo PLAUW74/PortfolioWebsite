@@ -54,6 +54,14 @@ const projects: Project[] = [
     tech: ["Unreal Engine 4", "Maya", "Substance Painter", "3D Art"],
     date: "Sep 2020 – Feb 2021",
   },
+    {
+    title: "New Project",
+    role: "Your Role",
+    description: "Short description for the card.",
+    fullDescription: "Longer description for the modal.",
+    tech: ["Tech1", "Tech2"],
+    date: "Jan 2026",
+  },
 ];
 
 function ProjectCard({

@@ -7,7 +7,6 @@ import { Hero } from "@/components/hero";
 import { Projects } from "@/components/projects";
 import { Skills } from "@/components/skills";
 import { BGPattern } from "@/components/bg-pattern";
-import { ReactiveDots } from "@/components/reactive-dots";
 import { LineNumbers } from "@/components/line-numbers";
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
@@ -148,27 +147,49 @@ export default function Home() {
 
   // Scroll to section when tab is clicked
   const handleTabClick = (id: TabId) => {
+    const container = scrollContainerRef.current;
     const section = document.getElementById(`section-${id}`);
-    if (!section) return;
-    isScrollingProgrammatically.current = true;
-    section.scrollIntoView({ behavior: "smooth", block: "start" });
-    setActiveTab(id);
-    setTimeout(() => { isScrollingProgrammatically.current = false; }, 800);
-  };
+    if (!container || !section) return;
 
+    isScrollingProgrammatically.current = true;
+
+    section.scrollIntoView({ behavior: "instant", block: "start" });
+
+    setActiveTab(id);
+
+    // detect scroll end properly
+    let timeout: any;
+
+    const onScroll = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+        container.removeEventListener("scroll", onScroll);
+      }, 100);
+    };
+
+    container.addEventListener("scroll", onScroll);
+
+
+  };
   // Update active tab based on scroll position
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const onScroll = () => {
-      if (isScrollingProgrammatically.current) return;
-      const scrollY = container.scrollTop;
-      const height = container.clientHeight;
+    if (isScrollingProgrammatically.current) return;
+
+    const height = container.clientHeight;
+    const containerTop = container.getBoundingClientRect().top;
 
       for (let i = tabs.length - 1; i >= 0; i--) {
         const el = document.getElementById(`section-${tabs[i].id}`);
-        if (el && el.offsetTop <= scrollY + height * 0.4) {
+        if (!el) continue;
+
+        const elTop = el.getBoundingClientRect().top;
+
+        if (elTop - containerTop <= height * 0.4) {
           setActiveTab(tabs[i].id);
           break;
         }
@@ -202,8 +223,6 @@ export default function Home() {
         {/* Shared dot background + reactive layer spanning full scroll height */}
         <div className="relative">
           <BGPattern variant="dots" mask="none" size={24} fill="rgba(255,255,255,0.06)" />
-          <ReactiveDots dotSpacing={24} dotSize={1} radius={100} maxGrow={3.5} pulseSpeed={1.4} lag={0.08} />
-
           {/* Line numbers — sticky so they follow scroll */}
           <div className="hidden md:block sticky top-0 float-left z-10">
             <LineNumbers totalLines={120} scrollContainerRef={scrollContainerRef} />

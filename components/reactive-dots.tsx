@@ -17,9 +17,9 @@ export function ReactiveDots({
   dotSpacing = 24,
   hoverColor = "rgba(29, 158, 117",
   radius = 60,
-  maxGrow = 2.5,
-  pulseSpeed = 2.0,
-  lag = 0.06,
+  maxGrow = 0,
+  pulseSpeed = 0.0,
+  lag = 0,
 }: ReactiveDotsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

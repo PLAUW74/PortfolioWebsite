@@ -7,9 +7,17 @@ interface LineNumbersProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function LineNumbers({ totalLines = 60, scrollContainerRef }: LineNumbersProps) {
-  const [activeLine, setActiveLine] = useState(1);
+export function LineNumbers({ totalLines = 120, scrollContainerRef }: LineNumbersProps) {
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [visibleHeight, setVisibleHeight] = useState(800);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setVisibleHeight(window.innerHeight - 41);
+    const onResize = () => setVisibleHeight(window.innerHeight - 41);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const target = scrollContainerRef?.current ?? window;
@@ -28,8 +36,7 @@ export function LineNumbers({ totalLines = 60, scrollContainerRef }: LineNumbers
       }
 
       const progress = maxScroll > 0 ? scrollY / maxScroll : 0;
-      const line = Math.floor(1 + progress * (totalLines - 1));
-      setActiveLine(line);
+      setScrollProgress(progress);
     };
 
     target.addEventListener("scroll", handleScroll, { passive: true });
@@ -37,42 +44,47 @@ export function LineNumbers({ totalLines = 60, scrollContainerRef }: LineNumbers
     return () => target.removeEventListener("scroll", handleScroll);
   }, [totalLines, scrollContainerRef]);
 
-  // Keep active line visible in the numbers column
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const lineEl = containerRef.current.querySelector(`[data-line="${activeLine}"]`) as HTMLElement;
-    if (lineEl) {
-      lineEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
-  }, [activeLine]);
+  const lineHeight = 32; // leading-8 = 2rem = 32px
+  const totalHeight = totalLines * lineHeight;
+  const maxOffset = totalHeight - visibleHeight;
+  const offset = maxOffset > 0 ? scrollProgress * maxOffset : 0;
+
+  // Which line is at the center of the visible area
+  const centerLine = Math.floor((offset + visibleHeight / 2) / lineHeight);
 
   return (
     <div
       ref={containerRef}
       className="hidden md:flex flex-col py-12 px-4 text-right select-none overflow-hidden"
-      style={{ maxHeight: "calc(100vh - 41px)", position: "sticky", top: "41px" }}
+      style={{ maxHeight: `calc(100vh - 41px)`, position: "sticky", top: "41px" }}
     >
-      {Array.from({ length: totalLines }, (_, i) => {
-        const num = i + 1;
-        const isActive = num === activeLine;
-        const distance = Math.abs(num - activeLine);
-        const opacity = distance === 0 ? 1 : Math.max(0.15, 0.6 - distance * 0.06);
+      <div
+        style={{
+          transform: `translateY(-${offset}px)`,
+          willChange: "transform",
+        }}
+      >
+        {Array.from({ length: totalLines }, (_, i) => {
+          const num = i + 1;
+          const distance = Math.abs(num - centerLine);
+          const isActive = distance === 0;
+          const opacity = isActive ? 1 : Math.max(0.15, 0.6 - distance * 0.06);
 
-        return (
-          <span
-            key={num}
-            data-line={num}
-            className="text-sm font-mono leading-8 transition-all duration-150"
-            style={{
-              color: isActive ? "var(--color-primary, oklch(0.65 0.15 180))" : undefined,
-              opacity: isActive ? 1 : opacity,
-              fontSize: isActive ? "0.8rem" : "0.75rem",
-            }}
-          >
-            {String(num).padStart(2, "0")}
-          </span>
-        );
-      })}
+          return (
+            <span
+              key={num}
+              className="text-sm font-mono leading-8 block transition-colors duration-150"
+              style={{
+                color: isActive ? "var(--color-primary, oklch(0.65 0.15 180))" : undefined,
+                opacity: isActive ? 1 : opacity,
+                fontSize: isActive ? "0.8rem" : "0.75rem",
+              }}
+            >
+              {String(num).padStart(3, "0")}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 }
